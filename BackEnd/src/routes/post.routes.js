@@ -1,7 +1,10 @@
-const express =require('express');
-const userModel = require('../models/user.model');
-const jwt = require('jsonwebtoken');
 
+//this post route is for testing the authentication of the user, it will check if the user is authenticated or not by checking the token in the cookies, if the token is valid then it will return the user data, otherwise it will return an error message.
+const express =require('express');
+const authMiddleware = require('../middlewares/auth.middleware');
+const  multer = require('multer');
+
+const upload = multer({storage: multer.memoryStorage()});
 
 
 
@@ -9,34 +12,15 @@ const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-router.post ('/', async(req,res)=>{
-    const token = req.cookies.token;
-    if(!token){
-        return res.status(401).json({
-            message:"Invalid please login first"
-        })
-    }
-    try{
-        const decoded =  jwt.verify(token,process.env.JWT_SECRET_KEY);
-        const user = await userModel.findById(decoded.id);
-        if(!user){
-            return res.status(401).json({
-                message:"User not found, login again"
-            })
-        }
-        req.user = user;
-        res.status(200).json({
-            message:"User authenticated successfully",
-            user
-        })
+router.post ('/', authMiddleware,
+    upload.single('file'), (req,res)=>{
+    res.status(200).json({
+        message:"File uploaded successfully",
+        file: req.file
+       
+    })
+});
 
-    }catch(err){
-        return res.status(401).json({
-            message:"Invalid token,login again "
-        })
-    }
-
-})
 
 
 module.exports = router;
